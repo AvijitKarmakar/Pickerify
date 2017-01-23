@@ -23,20 +23,27 @@ import java.util.List;
 
 public class ListAdapter extends BaseAdapter {
 
-    private int height, visibleItemCount, centerPos;
+    private int height, centerPos;
     private List<String> dataList;
     private Context context;
+    private SparseIntArray positionsNoClickables;
 
     ListAdapter(Context context, List<String> dataList, int visibleItemCount) {
         this.context = context;
         this.dataList = dataList;
-        this.visibleItemCount = visibleItemCount;
+        positionsNoClickables = new SparseIntArray(4);
         setItems(dataList, visibleItemCount);
+        setPositonsNoClickables();
     }
 
     public void setHeight(int height) {
         this.height = height;
         notifyDataSetChanged();
+    }
+
+    void handleSelectEvent(int position) {
+        this.centerPos = position;
+        this.notifyDataSetChanged();
     }
 
     @Override
@@ -72,6 +79,12 @@ public class ListAdapter extends BaseAdapter {
 
         binding.itemTxt.setText(num);
 
+        if (position == centerPos) {
+            binding.itemTxt.setTextColor(ContextCompat.getColor(context, R.color.colorWhite));
+        } else {
+            binding.itemTxt.setTextColor(ContextCompat.getColor(context, R.color.colorBlue));
+        }
+
         return convertView;
     }
 
@@ -84,7 +97,20 @@ public class ListAdapter extends BaseAdapter {
 
         this.dataList = items;
 
-        centerPos = (visibleItem / 2) + 1;
+        centerPos = (visibleItem / 2);
+    }
+
+    private void setPositonsNoClickables() {
+        positionsNoClickables.put(0, 0);
+        positionsNoClickables.put(1, 1);
+        positionsNoClickables.put(dataList.size() - 2, dataList.size() - 2);
+        positionsNoClickables.put(dataList.size() - 1, dataList.size() - 1);
+    }
+
+    @Override
+    public boolean isEnabled(int position) {
+        boolean isClickable = positionsNoClickables.get(position, -1) == -1;
+        return isClickable && super.isEnabled(position);
     }
 
 }

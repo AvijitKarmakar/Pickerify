@@ -3,6 +3,7 @@ package com.ui.pickerify;
 import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import android.widget.ListView;
 
 import com.ui.pickerify.databinding.ListViewLayoutBinding;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,9 +26,12 @@ public class PickerifyListView extends FrameLayout implements AdapterView.OnItem
         AbsListView.OnScrollListener {
 
     private static final int DEF_VISIBLE_ITEM_SIZE = 5;
-    private ListView listView;
+    private ListViewLayoutBinding binding;
     private ListAdapter listAdapter;
-    private int height, width;
+    private int height, width, position;
+    private boolean onItemClicked = true;
+    private PickerifyListViewItemClickListener pickerifyListViewItemClickListener;
+    private List<String> dataList;
 
     public PickerifyListView(Context context) {
         this(context, null);
@@ -48,25 +53,60 @@ public class PickerifyListView extends FrameLayout implements AdapterView.OnItem
     }
 
     private void inflateListViewLayout() {
-        ListViewLayoutBinding binding = DataBindingUtil.inflate(LayoutInflater.from(getContext()),
+        binding = DataBindingUtil.inflate(LayoutInflater.from(getContext()),
                 R.layout.list_view_layout, this, false);
-        View view = binding.getRoot();
 
-        listView = (ListView) view.findViewById(R.id.list_view);
-        listView.setOnItemClickListener(this);
-        listView.setOnScrollListener(this);
+        binding.listView.setOnItemClickListener(this);
+        binding.listView.setOnScrollListener(this);
 
-        addView(view);
+        addView(binding.getRoot());
     }
 
     public void setData(List<String> dataList) {
+        this.dataList = dataList;
         listAdapter = new ListAdapter(getContext(), dataList, DEF_VISIBLE_ITEM_SIZE);
-        listView.setAdapter(listAdapter);
+        binding.listView.setAdapter(listAdapter);
     }
 
     @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        onItemClicked = false;
+        setNewPositionCenter(position);
+    }
 
+    private void setNewPositionCenter(int position) {
+        listAdapter.setHeight(height);
+        listAdapter.handleSelectEvent(position);
+        selectListItem(position);
+    }
+
+    private void selectListItem(int position) {
+        selectListItem(position - 2, true);
+    }
+
+    private void selectListItem(int pos, final boolean notify) {
+        this.position = pos;
+        binding.listView.smoothScrollToPositionFromTop(position, 0, 500);
+        if (notify) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    //We need to give the adapter time to draw the views
+                    if (pickerifyListViewItemClickListener == null) {
+                        throw new IllegalStateException(
+                                "You must assign a valid PickerUIListView.PickerUIItemClickListener first!");
+                    }
+                    pickerifyListViewItemClickListener
+                            .onItemClickPickerifyListView(position, dataList.get(position));
+                }
+            }, 200);
+
+        }
+    }
+
+    public void setOnItemClickItemPickerUI(PickerifyListViewItemClickListener pickerifyListViewItemClickListener) {
+        this.pickerifyListViewItemClickListener = pickerifyListViewItemClickListener;
     }
 
     @Override
@@ -86,6 +126,10 @@ public class PickerifyListView extends FrameLayout implements AdapterView.OnItem
         width = getMeasuredWidth();
         listAdapter.setHeight(height / DEF_VISIBLE_ITEM_SIZE);
         setMeasuredDimension(width, height);
+    }
+
+    public interface PickerifyListViewItemClickListener {
+        void onItemClickPickerifyListView(int position, String valueResult);
     }
 
 }
