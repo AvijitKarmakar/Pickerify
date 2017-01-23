@@ -11,11 +11,9 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
-import android.widget.ListView;
 
 import com.ui.pickerify.databinding.ListViewLayoutBinding;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

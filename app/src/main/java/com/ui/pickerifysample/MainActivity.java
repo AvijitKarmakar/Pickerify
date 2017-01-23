@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-import com.ui.pickerify.ListAdapter;
 import com.ui.pickerify.PickerifyListView;
 import com.ui.pickerifysample.databinding.ActivityMainBinding;
 
