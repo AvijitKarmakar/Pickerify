@@ -28,7 +28,7 @@ public class PickerifyListView extends FrameLayout implements AdapterView.OnItem
     private static final int DEF_VISIBLE_ITEM_SIZE = 5;
     private ListViewLayoutBinding binding;
     private ListAdapter listAdapter;
-    private int height, width, position;
+    private int height, width, position, scrollTop, scrollBottom, firstItem, lastPositionNotified;
     private boolean onItemClicked = true;
     private PickerifyListViewItemClickListener pickerifyListViewItemClickListener;
     private List<String> dataList;
@@ -110,13 +110,40 @@ public class PickerifyListView extends FrameLayout implements AdapterView.OnItem
     }
 
     @Override
-    public void onScrollStateChanged(AbsListView absListView, int i) {
-
+    public void onScrollStateChanged(AbsListView absListView, int scrollState) {
+        if (scrollState == 0) {
+            onItemClicked = true;
+            getItemInListCenter();
+            if (scrollTop < -(height / 5)) {
+                listAdapter.handleSelectEvent(firstItem + 1 + 2);
+                selectListItem(firstItem + 1 + 2);
+            } else if (scrollBottom < (height / 5)) {
+                selectListItem(firstItem + 2);
+            }
+        }
     }
 
     @Override
-    public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+    public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if (onItemClicked) {
+            View v = binding.listView.getChildAt(0);
+            scrollTop = (v == null) ? 0 : v.getTop();
+            scrollBottom = (v == null) ? 0 : v.getBottom();
+            firstItem = firstVisibleItem;
+            getItemInListCenter();
+        }
+        onItemClicked = true;
+    }
 
+    public int getItemInListCenter() {
+        int position = binding.listView.pointToPosition(getWidth() / 2, getHeight() / 2);
+        if (position != -1) {
+            if (position != lastPositionNotified) {
+                lastPositionNotified = position;
+                listAdapter.handleSelectEvent(position);
+            }
+        }
+        return position + 4;
     }
 
     @Override
